@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import express from "express";
+import dotenv  from "dotenv";
 import {
   addEventToUser,
   createUser,
@@ -11,6 +12,7 @@ import {
 import cors from "cors";
 
 const app = express();
+dotenv.config();
 
 app.use(express.json());
 
@@ -18,7 +20,7 @@ app.use(cors());
 
 try {
   await mongoose.connect(
-    "mongodb+srv://dev:bwkFrK7OFZrdqD72@cluster0.jqzzfst.mongodb.net/master-db?retryWrites=true&w=majority&appName=Coursevita"
+    process.env.MONGO_URI
   );
   console.log("MongoDB Connected");
 } catch (error) {
@@ -33,6 +35,6 @@ app.put("/student/:id", updateUser);
 app.put("/student_addevent", addEventToUser);
 app.delete("/student/:id", deleteUser);
 
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
+app.listen(5001, () => {
+  console.log("Server running on port 5001");
 });

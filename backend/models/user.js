@@ -1,12 +1,3 @@
-import mongoose from "mongoose";
-
-const eventSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  description: { type: String, required: true },
-  date: { type: Date, required: true },
-  tag: { type: String, required: true },
-});
-
 const userSchema = new mongoose.Schema({
   student_id: {
     type: String,
@@ -44,26 +35,36 @@ const userSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  events: [eventSchema],
+  events: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Event", // Set the reference to the Event model
+    },
+  ],
 });
-
 userSchema.pre("save", async function (next) {
   if (!this.isNew) return next();
   const lastUser = await mongoose
     .model("User")
     .findOne()
     .sort({ student_id: -1 });
-
   if (!lastUser) {
     this.student_id = "CV00001";
   } else {
     const lastNumber = parseInt(lastUser.student_id.substring(2)) + 1;
     this.student_id = "CV" + lastNumber.toString().padStart(5, "0");
   }
-
   next();
 });
-
 const User = mongoose.model("User", userSchema);
-
+mongoose.model("Event", eventSchema);
 export default User;
+
+
+
+
+
+
+
+
+

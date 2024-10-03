@@ -12,7 +12,7 @@ const Home = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://localhost:5000/students");
+        const response = await fetch("http://localhost:5001/students");
         const data = await response.json();
         setStudents(data);
       } catch (error) {
@@ -50,7 +50,7 @@ const Home = () => {
 
   // Handle navigation to student detail
   const goToStudentDetail = (id) => {
-    navigate(`/${id}`);
+    navigate(`student/${id}`);
   };
 
   return (
@@ -111,7 +111,7 @@ const Home = () => {
                       src={arrow}
                       alt="Go to details"
                       className="cursor-pointer"
-                      onClick={() => goToStudentDetail(student.id)}
+                      onClick={() => goToStudentDetail(student.student_id)}
                     />
                   </td>
                 </tr>

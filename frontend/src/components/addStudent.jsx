@@ -52,19 +52,11 @@ const AddStudent = () => {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.student_name) newErrors.student_name = "Name is required.";
-    if (formData.age === null || formData.age <= 0)
+    if (formData.age!=null && formData.age <= 0)
       newErrors.age = "Age must be greater than 0.";
     if (!formData.student_email) newErrors.student_email = "Email is required.";
     if (!formData.student_phone)
       newErrors.student_phone = "Phone number is required.";
-    if (!formData.college_name)
-      newErrors.college_name = "College name is required.";
-    if (!formData.location)
-      newErrors.location = "College location is required.";
-    if (!formData.employment)
-      newErrors.employment = "Employment status is required.";
-    if (!formData.passout_year || formData.passout_year.toString().length !== 4)
-      newErrors.passout_year = "Passout year must be a 4-digit number.";
 
     return newErrors;
   };
@@ -76,7 +68,7 @@ const AddStudent = () => {
       setErrors(formErrors);
     } else {
       try {
-        const response = await fetch("http://localhost:5000/student", {
+        const response = await fetch("http://localhost:5001/student", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -110,7 +102,7 @@ const AddStudent = () => {
         <div className="grid grid-cols-2 gap-8 mb-4">
           <div>
             <label className="block text-gray-700 text-sm font-semibold mb-2">
-              Student Name:
+              Student Name*:
             </label>
             <input
               type="text"
@@ -142,7 +134,7 @@ const AddStudent = () => {
         <div className="grid grid-cols-2 gap-8 mb-4">
           <div>
             <label className="block text-gray-700 text-sm font-semibold mb-2">
-              Email:
+              Email*:
             </label>
             <input
               type="email"
@@ -157,7 +149,7 @@ const AddStudent = () => {
           </div>
           <div>
             <label className="block text-gray-700 text-sm font-semibold mb-2">
-              Phone:
+              Phone*:
             </label>
             <input
               type="tel"

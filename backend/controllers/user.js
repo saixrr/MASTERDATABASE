@@ -26,7 +26,7 @@ export const getAllUsers = async (req, res) => {
 // Get a single user by ID
 export const getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findOne({student_id:req.params.id});
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -39,7 +39,7 @@ export const getUserById = async (req, res) => {
 // Update a user by ID
 export const updateUser = async (req, res) => {
   try {
-    const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
+    const updatedUser = await User.findOneAndUpdate({student_id:req.params.id}, req.body, {
       new: true,
       runValidators: true,
     });
@@ -59,8 +59,8 @@ export const addEventToUser = async (req, res) => {
   const { title, description, date, tag } = req.body;
 
   try {
-    const updatedUser = await User.findByIdAndUpdate(
-      req.params.id,
+    const updatedUser = await User.findOneAndUpdate(
+      {student_id:req.params.id},
       {
         $push: {
           events: { title, description, date, tag },
@@ -84,7 +84,7 @@ export const addEventToUser = async (req, res) => {
 // Delete a user by ID
 export const deleteUser = async (req, res) => {
   try {
-    const deletedUser = await User.findByIdAndDelete(req.params.id);
+    const deletedUser = await User.findOneAndDelete({student_id:req.params.id});
     if (!deletedUser) {
       return res.status(404).json({ message: "User not found" });
     }

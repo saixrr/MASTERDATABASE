@@ -1,40 +1,49 @@
 import mongoose from "mongoose";
 import express from "express";
-import dotenv  from "dotenv";
-import {
-  addEventToUser,
-  createUser,
-  deleteUser,
-  getAllUsers,
-  getUserById,
-  updateUser,
-} from "./controllers/user.js";
+import dotenv from "dotenv";
 import cors from "cors";
+import {
+  addActivityToStudent,
+  createStudent,
+  deleteStudent,
+  getAllStudents,
+  getStudentById,
+  updateStudent,
+} from "./controllers/student.js";
 
 const app = express();
 dotenv.config();
 
 app.use(express.json());
-
 app.use(cors());
 
-try {
-  await mongoose.connect(
-    process.env.MONGO_URI
-  );
-  console.log("MongoDB Connected");
-} catch (error) {
-  console.error("Error connecting to MongoDB:", error.message);
-  process.exit(1);
-}
+const connectDB = async () => {
+  try {
+    if (!process.env.MONGO_URI) {
+      throw new Error("MONGO_URI is not defined in the environment variables");
+    }
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log("MongoDB Connected");
+  } catch (error) {
+    console.error("Error connecting to MongoDB:", error.message);
+    process.exit(1);
+  }
+};
 
-app.get("/students", getAllUsers);
-app.get("/student/:id", getUserById);
-app.post("/student", createUser);
-app.put("/student/:id", updateUser);
-app.put("/student_addevent", addEventToUser);
-app.delete("/student/:id", deleteUser);
+connectDB();
 
-app.listen(5001, () => {
-  console.log("Server running on port 5001");
+app.get("/students", getAllStudents);
+app.get("/student/:id", getStudentById);
+app.post("/student", createStudent);
+app.put("/student/:id", updateStudent);
+app.post("/student/:id/activity", addActivityToStudent);
+
+app.delete("/student/:id", deleteStudent);
+
+const PORT = process.env.PORT || 5001;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

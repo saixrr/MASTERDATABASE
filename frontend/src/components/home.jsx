@@ -12,7 +12,7 @@ const Home = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://localhost:5001/students");
+        const response = await fetch("http://localhost:5002/students");
         const data = await response.json();
         setStudents(data);
       } catch (error) {
@@ -34,7 +34,7 @@ const Home = () => {
       student.student_id.toLowerCase().includes(searchLower) ||
       student.student_name.toLowerCase().includes(searchLower) ||
       student.student_email.includes(searchLower) ||
-      student.college_name.toLowerCase().includes(searchLower)
+      student.student_phone.toString().includes(searchLower)
     );
   });
 
@@ -45,17 +45,14 @@ const Home = () => {
     indexOfLastStudent
   );
 
-  // Pagination logic
   const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
 
-  // Handle navigation to student detail
   const goToStudentDetail = (id) => {
     navigate(`student/${id}`);
   };
 
   return (
     <div className="App container mx-auto p-6">
-      {/* Search Bar */}
       <form className="flex items-center justify-between mx-auto mb-6 px-5 gap-x-5">
         <h1 className="text-3xl ">Students Database</h1>
         <label htmlFor="simple-search" className="sr-only">
@@ -70,8 +67,8 @@ const Home = () => {
           <input
             type="text"
             id="simple-search"
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full pl-10 p-2.5" // pl-10 is used for padding to make space for the image
-            placeholder="Search by ID, Name, or Mobile..."
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full pl-10 p-2.5"
+            placeholder="Search by ID, Name, or Email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -84,7 +81,6 @@ const Home = () => {
         </Link>
       </form>
 
-      {/* Table displaying student info */}
       <div className="p-3 border rounded-md">
         <table className="min-w-full bg-white">
           <thead>
@@ -92,7 +88,7 @@ const Home = () => {
               <th className="py-2 px-4 border-b">ID</th>
               <th className="py-2 px-4 border-b">Name</th>
               <th className="py-2 px-4 border-b">Email</th>
-              <th className="py-2 px-4 border-b">College</th>
+              <th className="py-2 px-4 border-b">Phone</th>
               <th className="py-2 px-4 border-b"></th>
             </tr>
           </thead>
@@ -105,7 +101,9 @@ const Home = () => {
                   <td className="py-2 px-4 border-b">
                     {student.student_email}
                   </td>
-                  <td className="py-2 px-4 border-b">{student.college_name}</td>
+                  <td className="py-2 px-4 border-b">
+                    {student.student_phone}
+                  </td>
                   <td className="py-2 px-4 border-b">
                     <img
                       src={arrow}
@@ -126,7 +124,6 @@ const Home = () => {
           </tbody>
         </table>
       </div>
-      {/* Pagination Controls */}
       <div className="flex justify-center mt-4">
         <Stack spacing={2}>
           <Pagination

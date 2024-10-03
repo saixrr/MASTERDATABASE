@@ -1,44 +1,45 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { FaPen } from "react-icons/fa"; // Import pen icon
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { MdDelete } from "react-icons/md";
 
 const GetStudentbyId = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     student_name: "",
     age: null,
+    gender: "",
     student_email: "",
     student_phone: "",
     college_name: "",
     location: "",
     employment: "",
+    field: "",
+    experience: null,
+    source: "",
     passout_year: null,
-    events: [{ title: "", description: "", date: "", tag: "" }],
+    skills: [],
+    activitys: [],
   });
 
+  const [editFieldData, setEditFieldData] = useState({ ...formData });
   const [errors, setErrors] = useState({});
-  
-  // State to track which fields are in edit mode
-  const [editMode, setEditMode] = useState({
-    student_name: false,
-    age: false,
-    student_email: false,
-    student_phone: false,
-    college_name: false,
-    location: false,
-    employment: false,
-    passout_year: false,
-  });
+  const [skill, setSkill] = useState("");
+  const [checkfirst, setCheckfirst] = useState(false);
+  const [newActivities, setNewActivities] = useState([
+    { title: "", description: "", date: "", tag: "" },
+  ]);
 
   useEffect(() => {
     const fetchStudentDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:5001/student/${id}`);
+        const response = await fetch(`http://localhost:5002/student/${id}`);
         if (!response.ok) {
           throw new Error(response.statusText);
         }
         const data = await response.json();
         setFormData(data);
+        setEditFieldData(data);
       } catch (error) {
         console.error("Error fetching student details:", error);
       }
@@ -49,56 +50,62 @@ const GetStudentbyId = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-    setErrors({ ...errors, [name]: "" });
+    setEditFieldData((prevData) => ({ ...prevData, [name]: value }));
+    setErrors((prevErrors) => ({ ...prevErrors, [name]: "" }));
   };
 
   const handleChangeint = (e) => {
-    const { name, valueAsNumber } = e.target;
-    setFormData({ ...formData, [name]: valueAsNumber });
-    setErrors({ ...errors, [name]: "" });
-  };
-
-  const handleEventChange = (index, e) => {
     const { name, value } = e.target;
-    const updatedEvents = [...formData.events];
-    updatedEvents[index][name] = value;
-    setFormData({ ...formData, events: updatedEvents });
+    const intValue = value ? parseInt(value, 10) : 0;
+    setEditFieldData((prevData) => ({
+      ...prevData,
+      [name]: intValue,
+    }));
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      [name]: "",
+    }));
   };
 
-  const addEvent = () => {
-    setFormData({
-      ...formData,
-      events: [
-        ...formData.events,
-        { title: "", description: "", date: "", tag: "" },
-      ],
-    });
+  const handleInputChangeSkill = (e) => {
+    setSkill(e.target.value);
   };
 
-  const removeEvent = (index) => {
-    const updatedEvents = formData.events.filter((_, i) => i !== index);
-    setFormData({ ...formData, events: updatedEvents });
+  const handleAddSkill = () => {
+    if (skill.trim()) {
+      setEditFieldData((prevData) => ({
+        ...prevData,
+        skills: [...prevData.skills, skill],
+      }));
+      setSkill("");
+    }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.student_name) newErrors.student_name = "Name is required.";
-    if (formData.age === null || formData.age <= 0)
-      newErrors.age = "Age must be greater than 0.";
-    if (!formData.student_email) newErrors.student_email = "Email is required.";
-    if (!formData.student_phone)
-      newErrors.student_phone = "Phone number is required.";
-    if (!formData.college_name)
-      newErrors.college_name = "College name is required.";
-    if (!formData.location)
-      newErrors.location = "College location is required.";
-    if (!formData.employment)
-      newErrors.employment = "Employment status is required.";
-    if (!formData.passout_year || formData.passout_year.toString().length !== 4)
-      newErrors.passout_year = "Passout year must be a 4-digit number.";
+  const handleDeleteSkill = (skillToRemove) => {
+    setEditFieldData((prevData) => ({
+      ...prevData,
+      skills: prevData.skills.filter((s) => s !== skillToRemove),
+    }));
+  };
 
-    return newErrors;
+  const handleActivityChange = (index, e) => {
+    const { name, value } = e.target;
+    const updatedActivities = [...newActivities];
+    updatedActivities[index][name] = value;
+    setNewActivities(updatedActivities);
+  };
+
+  const handleAddActivity = () => {
+    setCheckfirst(true);
+    setNewActivities([
+      ...newActivities,
+      { title: "", description: "", date: "", tag: "" },
+    ]);
+  };
+
+  const handleRemoveActivity = (index) => {
+    const updatedActivities = newActivities.filter((_, i) => i !== index);
+    setNewActivities(updatedActivities);
   };
 
   const handleSubmit = async (e) => {
@@ -108,381 +115,467 @@ const GetStudentbyId = () => {
       setErrors(formErrors);
     } else {
       try {
-        const response = await fetch(`http://localhost:5001/student/${id}`, {
+        const response = await fetch(`http://localhost:5002/student/${id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(editFieldData),
         });
         if (!response.ok) {
           throw new Error(response.statusText);
         }
+
         const data = await response.json();
-        console.log("Update successful:", data);
-        // Reset edit modes after successful update
-        setEditMode({
-          student_name: false,
-          age: false,
-          student_email: false,
-          student_phone: false,
-          college_name: false,
-          location: false,
-          employment: false,
-          passout_year: false,
-        });
+        setFormData(data);
+
+        for (const activity of newActivities) {
+          if (
+            activity.title &&
+            activity.description &&
+            activity.date &&
+            activity.tag
+          ) {
+            await fetch(`http://localhost:5002/student/${id}/activity`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(activity),
+            });
+          }
+        }
+
+        alert("Successfully saved");
+        navigate("/");
       } catch (error) {
         console.error("Error during submission:", error);
+        alert("Error saving the student data and activities.");
       }
     }
   };
 
-  // Function to toggle edit mode for a field
-  const toggleEditMode = (field) => {
-    setEditMode((prev) => ({ ...prev, [field]: !prev[field] }));
+  const validateForm = () => {
+    const formErrors = {};
+    if (!editFieldData.student_name)
+      formErrors.student_name = "Name is required";
+    if (!editFieldData.age || editFieldData.age <= 0)
+      formErrors.age = "Valid age is required";
+    if (!editFieldData.student_email)
+      formErrors.student_email = "Email is required";
+    return formErrors;
+  };
+
+  const handleDiscard = () => {
+    setEditFieldData(formData);
   };
 
   return (
     <div className="mt-5 py-5">
+      <Link
+        to="/"
+        className="ml-5 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+      >
+        Go to Home
+      </Link>
       <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
         Student Information Form
       </h2>
       <form
-        onSubmit={handleSubmit}
         className="w-full max-w-3xl mx-auto p-8 bg-white rounded-lg border border-gray-200"
+        onSubmit={handleSubmit}
       >
-        {/* Name and Age */}
+        {/* Student Name and Email */}
         <div className="grid grid-cols-2 gap-8 mb-4">
           <div>
-            <label className="block text-gray-700 text-sm font-semibold mb-2">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
               Student Name:
             </label>
-            {editMode.student_name ? (
-              <>
-                <input
-                  type="text"
-                  name="student_name"
-                  value={formData.student_name}
-                  onChange={handleChange}
-                  className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button type="button" onClick={() => toggleEditMode("student_name")}>
-                  Save
-                </button>
-              </>
-            ) : (
-              <div className="flex items-center">
-                <span className="flex-1">{formData.student_name}</span>
-                <FaPen
-                  onClick={() => toggleEditMode("student_name")}
-                  className="text-blue-500 cursor-pointer"
-                />
-              </div>
-            )}
+            <input
+              type="text"
+              name="student_name"
+              value={editFieldData.student_name}
+              onChange={handleChange}
+              className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
             {errors.student_name && (
               <p className="text-red-500 text-sm">{errors.student_name}</p>
             )}
           </div>
-          <div>
-            <label className="block text-gray-700 text-sm font-semibold mb-2">
-              Age:
-            </label>
-            {editMode.age ? (
-              <>
-                <input
-                  type="number"
-                  name="age"
-                  value={formData.age}
-                  onChange={handleChangeint}
-                  className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button type="button" onClick={() => toggleEditMode("age")}>
-                  Save
-                </button>
-              </>
-            ) : (
-              <div className="flex items-center">
-                <span className="flex-1">{formData.age}</span>
-                <FaPen
-                  onClick={() => toggleEditMode("age")}
-                  className="text-blue-500 cursor-pointer"
-                />
-              </div>
-            )}
-            {errors.age && <p className="text-red-500 text-sm">{errors.age}</p>}
-          </div>
-        </div>
 
-        {/* Email and Phone */}
-        <div className="grid grid-cols-2 gap-8 mb-4">
           <div>
-            <label className="block text-gray-700 text-sm font-semibold mb-2">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
               Email:
             </label>
-            {editMode.student_email ? (
-              <>
-                <input
-                  type="email"
-                  name="student_email"
-                  value={formData.student_email}
-                  onChange={handleChange}
-                  className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button type="button" onClick={() => toggleEditMode("student_email")}>
-                  Save
-                </button>
-              </>
-            ) : (
-              <div className="flex items-center">
-                <span className="flex-1">{formData.student_email}</span>
-                <FaPen
-                  onClick={() => toggleEditMode("student_email")}
-                  className="text-blue-500 cursor-pointer"
-                />
-              </div>
-            )}
+            <input
+              type="email"
+              name="student_email"
+              value={editFieldData.student_email}
+              onChange={handleChange}
+              className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
             {errors.student_email && (
               <p className="text-red-500 text-sm">{errors.student_email}</p>
             )}
           </div>
+        </div>
+
+        {/* Phone and Age*/}
+        <div className="grid grid-cols-2 gap-8 mb-4">
           <div>
-            <label className="block text-gray-700 text-sm font-semibold mb-2">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
               Phone:
             </label>
-            {editMode.student_phone ? (
-              <>
-                <input
-                  type="tel"
-                  name="student_phone"
-                  value={formData.student_phone}
-                  onChange={handleChange}
-                  className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button type="button" onClick={() => toggleEditMode("student_phone")}>
-                  Save
-                </button>
-              </>
-            ) : (
-              <div className="flex items-center">
-                <span className="flex-1">{formData.student_phone}</span>
-                <FaPen
-                  onClick={() => toggleEditMode("student_phone")}
-                  className="text-blue-500 cursor-pointer"
-                />
-              </div>
-            )}
+            <input
+              type="tel"
+              name="student_phone"
+              value={editFieldData.student_phone}
+              onChange={handleChange}
+              className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
             {errors.student_phone && (
               <p className="text-red-500 text-sm">{errors.student_phone}</p>
             )}
           </div>
+
+          <div>
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Age:
+            </label>
+            <input
+              type="number"
+              name="age"
+              value={editFieldData.age}
+              onChange={handleChangeint}
+              className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {errors.age && <p className="text-red-500 text-sm">{errors.age}</p>}
+          </div>
         </div>
 
-        {/* College Name and Location */}
+        {/*Gender and College */}
         <div className="grid grid-cols-2 gap-8 mb-4">
           <div>
             <label className="block text-gray-700 text-sm font-semibold mb-2">
+              Gender:
+            </label>
+            <select
+              name="gender"
+              value={editFieldData.gender}
+              onChange={handleChange}
+              className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="" disabled>
+                -- select --
+              </option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+            {errors.gender && (
+              <p className="text-red-500 text-sm">{errors.gender}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-gray-700 text-sm font-bold mb-2">
               College Name:
             </label>
-            {editMode.college_name ? (
-              <>
-                <input
-                  type="text"
-                  name="college_name"
-                  value={formData.college_name}
-                  onChange={handleChange}
-                  className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button type="button" onClick={() => toggleEditMode("college_name")}>
-                  Save
-                </button>
-              </>
-            ) : (
-              <div className="flex items-center">
-                <span className="flex-1">{formData.college_name}</span>
-                <FaPen
-                  onClick={() => toggleEditMode("college_name")}
-                  className="text-blue-500 cursor-pointer"
-                />
-              </div>
-            )}
+            <input
+              type="text"
+              name="college_name"
+              value={editFieldData.college_name}
+              onChange={handleChange}
+              className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
             {errors.college_name && (
               <p className="text-red-500 text-sm">{errors.college_name}</p>
             )}
           </div>
+        </div>
+
+        {/* Location and Year */}
+        <div className="grid grid-cols-2 gap-8 mb-4">
           <div>
-            <label className="block text-gray-700 text-sm font-semibold mb-2">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
               Location:
             </label>
-            {editMode.location ? (
-              <>
-                <input
-                  type="text"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleChange}
-                  className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button type="button" onClick={() => toggleEditMode("location")}>
-                  Save
-                </button>
-              </>
-            ) : (
-              <div className="flex items-center">
-                <span className="flex-1">{formData.location}</span>
-                <FaPen
-                  onClick={() => toggleEditMode("location")}
-                  className="text-blue-500 cursor-pointer"
-                />
-              </div>
-            )}
+            <input
+              type="text"
+              name="location"
+              value={editFieldData.location}
+              onChange={handleChange}
+              className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
             {errors.location && (
               <p className="text-red-500 text-sm">{errors.location}</p>
             )}
           </div>
-        </div>
 
-        {/* Employment Status and Passout Year */}
-        <div className="grid grid-cols-2 gap-8 mb-4">
           <div>
-            <label className="block text-gray-700 text-sm font-semibold mb-2">
-              Employment Status:
-            </label>
-            {editMode.employment ? (
-              <>
-                <input
-                  type="text"
-                  name="employment"
-                  value={formData.employment}
-                  onChange={handleChange}
-                  className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button type="button" onClick={() => toggleEditMode("employment")}>
-                  Save
-                </button>
-              </>
-            ) : (
-              <div className="flex items-center">
-                <span className="flex-1">{formData.employment}</span>
-                <FaPen
-                  onClick={() => toggleEditMode("employment")}
-                  className="text-blue-500 cursor-pointer"
-                />
-              </div>
-            )}
-            {errors.employment && (
-              <p className="text-red-500 text-sm">{errors.employment}</p>
-            )}
-          </div>
-          <div>
-            <label className="block text-gray-700 text-sm font-semibold mb-2">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
               Passout Year:
             </label>
-            {editMode.passout_year ? (
-              <>
-                <input
-                  type="number"
-                  name="passout_year"
-                  value={formData.passout_year}
-                  onChange={handleChangeint}
-                  className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button type="button" onClick={() => toggleEditMode("passout_year")}>
-                  Save
-                </button>
-              </>
-            ) : (
-              <div className="flex items-center">
-                <span className="flex-1">{formData.passout_year}</span>
-                <FaPen
-                  onClick={() => toggleEditMode("passout_year")}
-                  className="text-blue-500 cursor-pointer"
-                />
-              </div>
-            )}
+            <input
+              type="number"
+              name="passout_year"
+              value={editFieldData.passout_year}
+              onChange={handleChangeint}
+              className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
             {errors.passout_year && (
               <p className="text-red-500 text-sm">{errors.passout_year}</p>
             )}
           </div>
         </div>
 
-        {/* Events Section */}
-        <h3 className="text-xl font-semibold mb-4">Events:</h3>
-        {formData.events.map((event, index) => (
-          <div key={index} className="border border-gray-300 p-4 mb-4 rounded-md">
-            <div className="grid grid-cols-4 gap-4 mb-2">
-              <div>
-                <label className="block text-gray-700 text-sm font-semibold mb-2">
-                  Title:
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  value={event.title}
-                  onChange={(e) => handleEventChange(index, e)}
-                  className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700 text-sm font-semibold mb-2">
-                  Description:
-                </label>
-                <input
-                  type="text"
-                  name="description"
-                  value={event.description}
-                  onChange={(e) => handleEventChange(index, e)}
-                  className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700 text-sm font-semibold mb-2">
-                  Date:
-                </label>
-                <input
-                  type="date"
-                  name="date"
-                  value={event.date}
-                  onChange={(e) => handleEventChange(index, e)}
-                  className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700 text-sm font-semibold mb-2">
-                  Tag:
-                </label>
-                <input
-                  type="text"
-                  name="tag"
-                  value={event.tag}
-                  onChange={(e) => handleEventChange(index, e)}
-                  className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
+        {/* Employment and field */}
+        <div className="grid grid-cols-2 gap-8 mb-4">
+          <div>
+            <label className="block text-gray-700 text-sm font-semibold mb-2">
+              Employment Status:
+            </label>
+            <select
+              name="employment"
+              value={editFieldData.employment}
+              onChange={handleChange}
+              className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="" disabled>
+                -- select --
+              </option>
+              <option value="Student">Student</option>
+              <option value="Employed">Employed</option>
+              <option value="Unemployed">Unemployed</option>
+            </select>
+            {errors.employment && (
+              <p className="text-red-500 text-sm">{errors.employment}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-gray-700 text-sm font-semibold mb-2">
+              Field of work or study:
+            </label>
+            <input
+              type="text"
+              name="field"
+              value={editFieldData.field}
+              onChange={handleChange}
+              className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {errors.field && (
+              <p className="text-red-500 text-sm">{errors.field}</p>
+            )}
+          </div>
+        </div>
+
+        {/*Exprience and Source*/}
+        <div className="grid grid-cols-2 gap-8 mb-4">
+          <div>
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Experience:
+            </label>
+            <input
+              type="number"
+              name="experience"
+              value={editFieldData.experience}
+              onChange={handleChangeint}
+              className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {errors.experience && (
+              <p className="text-red-500 text-sm">{errors.experience}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Source:
+            </label>
+            <input
+              type="text"
+              name="source"
+              value={editFieldData.source}
+              onChange={handleChange}
+              className="w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {errors.source && (
+              <p className="text-red-500 text-sm">{errors.source}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Skills Section */}
+        <div className="p-2 border rounded-lg">
+          <h2 className="font-semibold mb-4">Skills</h2>
+          <div className="flex mb-4">
+            <input
+              type="text"
+              value={skill}
+              onChange={handleInputChangeSkill}
+              placeholder="Enter a skill"
+              className="flex-1 p-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2"
+            />
             <button
               type="button"
-              onClick={() => removeEvent(index)}
-              className="bg-red-500 text-white py-1 px-3 rounded-md"
+              onClick={handleAddSkill}
+              className="bg-green-500 text-white px-4 rounded-r-md hover:bg-green-600 transition duration-200"
             >
-              Remove Event
+              Add
             </button>
           </div>
-        ))}
-        <button
-          type="button"
-          onClick={addEvent}
-          className="bg-blue-500 text-white py-2 px-4 rounded-md mb-4"
-        >
-          Add Event
-        </button>
+          <ul className="list-disc pl-5">
+            {editFieldData.skills.map((s, index) => (
+              <li
+                key={index}
+                className="flex justify-between items-center mb-2"
+              >
+                <span className="bg-gray-100 border px-2 py-0.5 w-full rounded-md">
+                  {s}
+                </span>
+                <button
+                  onClick={() => handleDeleteSkill(s)}
+                  className="text-red-500 px-2 rounded hover:text-red-600 transition duration-200"
+                >
+                  <MdDelete size={20} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          className="w-full bg-green-500 text-white py-2 rounded-md"
-        >
-          Update Student
-        </button>
+        {/* Existing activities */}
+        <div className="my-6 bg-gray-100 p-4 rounded-lg shadow-md">
+          <h3 className="text-lg font-bold mb-4 text-blue-700">Activities</h3>
+          {editFieldData.activitys && editFieldData.activitys.length > 0 ? (
+            <ul className="space-y-4">
+              {editFieldData.activitys.map((activity, index) => (
+                <li
+                  key={index}
+                  className="p-4 border border-gray-200 rounded-md bg-white hover:shadow-lg transition-shadow"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-md font-medium text-gray-800">
+                      <strong>Title:</strong> {activity.title}
+                    </h4>
+                    <span className="text-xs text-gray-500">
+                      {new Date(activity.date).toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+                  <p className="text-gray-700 mb-2">
+                    <strong>Description:</strong> {activity.description}
+                  </p>
+                  <span className="inline-block bg-blue-100 text-blue-600 text-sm font-medium px-2 py-1 rounded">
+                    {activity.tag}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-500 italic">No activities available.</p>
+          )}
+        </div>
+
+        {/* Add Multiple Activities Section */}
+        <div className="my-6 bg-gray-100 p-4 rounded-lg shadow-md">
+          <h3 className="text-lg font-bold mb-4 text-blue-700">
+            Add Activities
+          </h3>
+          {checkfirst &&
+            newActivities.map((activity, index) => (
+              <div key={index} className="mb-4 border-b pb-4">
+                <div className="mb-4">
+                  <label className="block text-gray-700 text-sm font-bold mb-2">
+                    Activity Title:
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={activity.title}
+                    onChange={(e) => handleActivityChange(index, e)}
+                    className="w-full p-1 border border-gray-300 rounded-md shadow-sm"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-gray-700 text-sm font-bold mb-2">
+                    Activity Description:
+                  </label>
+                  <input
+                    type="text"
+                    name="description"
+                    value={activity.description}
+                    onChange={(e) => handleActivityChange(index, e)}
+                    className="w-full p-1 border border-gray-300 rounded-md shadow-sm"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-gray-700 text-sm font-bold mb-2">
+                    Activity Date:
+                  </label>
+                  <input
+                    type="date"
+                    name="date"
+                    value={activity.date}
+                    onChange={(e) => handleActivityChange(index, e)}
+                    className="w-full p-1 border border-gray-300 rounded-md shadow-sm"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-gray-700 text-sm font-bold mb-2">
+                    Activity Tag:
+                  </label>
+                  <select
+                    name="tag"
+                    value={activity.tag}
+                    onChange={(e) => handleActivityChange(index, e)}
+                    className="w-full p-1 border border-gray-300 rounded-md shadow-sm"
+                  >
+                    <option value="" disabled>
+                      -- Select --
+                    </option>
+                    <option value="Workshop">Workshop</option>
+                    <option value="Hackathon">Hackathon</option>
+                    <option value="Course">Course</option>
+                    <option value="Bootcamp">Bootcamp</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveActivity(index)}
+                  className="bg-red-500 text-white py-1 px-2 rounded-md hover:bg-red-600"
+                >
+                  Remove Activity
+                </button>
+              </div>
+            ))}
+
+          <button
+            type="button"
+            onClick={handleAddActivity}
+            className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600"
+          >
+            Add Another Activity
+          </button>
+        </div>
+
+        <div className="mt-8 flex justify-end space-x-4">
+          <button
+            type="submit"
+            className="px-4 py-2 bg-green-500 text-white rounded-lg"
+          >
+            Save Changes
+          </button>
+          <button
+            type="button"
+            onClick={handleDiscard}
+            className="px-4 py-2 bg-red-500 text-white rounded-lg"
+          >
+            Discard
+          </button>
+        </div>
       </form>
     </div>
   );

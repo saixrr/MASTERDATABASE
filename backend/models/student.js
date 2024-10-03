@@ -1,4 +1,13 @@
-const userSchema = new mongoose.Schema({
+import mongoose from "mongoose";
+
+const activitySchema = new mongoose.Schema({
+  title: { type: String },
+  description: { type: String },
+  date: { type: Date },
+  tag: { type: String },
+});
+
+const studentSchema = new mongoose.Schema({
   student_id: {
     type: String,
     unique: true,
@@ -9,7 +18,9 @@ const userSchema = new mongoose.Schema({
   },
   age: {
     type: Number,
-    required: true,
+  },
+  gender: {
+    type: String,
   },
   student_email: {
     type: String,
@@ -21,50 +32,43 @@ const userSchema = new mongoose.Schema({
   },
   college_name: {
     type: String,
-    required: true,
+  },
+  skills: {
+    type: Array,
   },
   location: {
     type: String,
-    required: true,
   },
   employment: {
     type: String,
-    required: true,
+  },
+  field: {
+    type: String,
   },
   passout_year: {
     type: Number,
-    required: true,
   },
-  events: [
+  activitys: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Event", // Set the reference to the Event model
+      ref: "Activity",
     },
   ],
 });
-userSchema.pre("save", async function (next) {
+studentSchema.pre("save", async function (next) {
   if (!this.isNew) return next();
-  const lastUser = await mongoose
-    .model("User")
+  const lastStu = await mongoose
+    .model("Student")
     .findOne()
     .sort({ student_id: -1 });
-  if (!lastUser) {
+  if (!lastStu) {
     this.student_id = "CV00001";
   } else {
-    const lastNumber = parseInt(lastUser.student_id.substring(2)) + 1;
+    const lastNumber = parseInt(lastStu.student_id.substring(2)) + 1;
     this.student_id = "CV" + lastNumber.toString().padStart(5, "0");
   }
   next();
 });
-const User = mongoose.model("User", userSchema);
-mongoose.model("Event", eventSchema);
-export default User;
-
-
-
-
-
-
-
-
-
+const Student = mongoose.model("Student", studentSchema);
+mongoose.model("Activity", activitySchema);
+export default Student;
